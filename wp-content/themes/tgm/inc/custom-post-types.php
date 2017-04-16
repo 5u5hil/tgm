@@ -68,8 +68,8 @@ function gossips() {
         'capability_type' => 'post',
         'supports' => [
             'title', 
-            'thumbnail',
-            'author', 'page-attributes']
+            
+            'author']
     ];
     register_post_type('gossips', $args);
 }
