@@ -21,29 +21,60 @@ class API {
         return $this->getResults(['post_type' => 'page', 'page_id' => $_REQUEST['id']], 1);
     }
 
-    function getCatPosts() {
-        return $this->getResults(['post_type' => 'posts', 'cat' => [$_REQUEST['cid']]]);
-    }
-
-    function getCategories() {
-        return get_categories(['child_of' => $_REQUEST['id'], 'hide_empty' => 0, 'hierarchiel' => TRUE]);
-    }
-
-    function getImg($id) {
-        $image = wp_get_attachment_image_src(get_post_thumbnail_id($id), 'full');
-        if (!is_array($image)):
-            $image = wp_get_attachment_image_src(38, 'full');
-        endif;
-        return $image['0'];
-    }
-
-    function getEntitiesByCategories() {
+    function getEntitiesByCategories($id = null) {
+        $catId = is_null($id) ? $_REQUEST['id'] : $id;
 
         return $this->getResults(['post_type' => 'entities', 'tax_query' => [[
-                    'taxonomy' => 'entity-category',
+                    'taxonomy' => 'categories',
                     'field' => 'id',
-                    'terms' => [4, 2],
+                    'terms' => $catId,
         ]]]);
+    }
+
+    function getEntity($id = null) {
+        $id = is_null($id) ? $_REQUEST['id'] : $id;
+        return $this->getResults(['post_type' => 'entities', 'p' => $id], 1);
+    }
+
+    function getGossips($id = null) {
+        $id = is_null($id) ? $_REQUEST['id'] : $id;
+        return $this->getResults(['post_type' => 'gossips', 'meta_query' => [[
+                    'key' => 'gossip_about',
+                    'value' => $id
+        ]]]);
+    }
+
+    function getGossip($id = null) {
+        $id = is_null($id) ? $_REQUEST['id'] : $id;
+        return $this->getResults(['post_type' => 'gossips', 'p' => $id], 1);
+    }
+
+    function insertGossip() {
+        $data = array(
+            'comment_post_ID' => $id,
+            'comment_content' => $msg,
+            'user_id' => $this->userId,
+            'comment_date' => $time,
+            'comment_approved' => 1,
+        );
+
+        return wp_insert_post($data);
+    }
+
+    function insertComment($id = null, $msg = null) {
+        $time = current_time('mysql');
+        $id = is_null($id) ? $_REQUEST['id'] : $id;
+        $msg = is_null($msg) ? $_REQUEST['msg'] : $msg;
+
+        $data = array(
+            'comment_post_ID' => $id,
+            'comment_content' => $msg,
+            'user_id' => $this->userId,
+            'comment_date' => $time,
+            'comment_approved' => 1,
+        );
+
+        return wp_insert_comment($data);
     }
 
     function getResults($args, $single = NULL) {
@@ -69,6 +100,14 @@ class API {
             $output = $output[0];
 
         return $output;
+    }
+
+    function getImg($id) {
+        $image = wp_get_attachment_image_src(get_post_thumbnail_id($id), 'full');
+        if (!is_array($image)):
+            $image = wp_get_attachment_image_src(38, 'full');
+        endif;
+        return $image['0'];
     }
 
 }
