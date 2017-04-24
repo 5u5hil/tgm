@@ -571,3 +571,5 @@ require get_parent_theme_file_path('/inc/admin-menu-items.php');
 require get_parent_theme_file_path('/inc/custom-taxonomies.php');
 require get_parent_theme_file_path('/inc/miscellaneous.php');
 require get_parent_theme_file_path('/inc/custom-columns.php');
+
+$api = new API();

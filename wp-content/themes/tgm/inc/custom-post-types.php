@@ -68,7 +68,7 @@ function gossips() {
         'capability_type' => 'post',
         'supports' => [
             'title', 
-            
+            'editor',
             'author']
     ];
     register_post_type('gossips', $args);
