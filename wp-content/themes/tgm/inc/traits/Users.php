@@ -2,6 +2,160 @@
 
 trait Users {
 
+    public function login($uname = null, $pass = null, $playerId = null) {
+
+        $uname = is_null($uname) ? $_REQUEST['uname'] : $uname;
+        $pass = is_null($pass) ? $_REQUEST['pass'] : $pass;
+        $playerId = is_null($playerId) ? $_REQUEST['playerId'] : $playerId;
+
+        $user = wp_signon(['user_login' => $uname, 'user_password' => $pass], false);
+        (isset($_REQUEST['playerId']) && !empty($_REQUEST['playerId'])) ? update_field('player_id', $playerId, "user_$user->ID") : '';
+
+
+        if (is_wp_error($user)) {
+            return ['error' => "Invalid Credentials!"];
+        } else {
+            return $this->getUserDetails($user->ID);
+        }
+    }
+
+    function socialRegistration($fname = null, $lname = null, $email = null, $userId = null, $source = null, $playerId = null, $mobileNo = null, $handle = null) {
+
+        $fname = is_null($fname) ? $_REQUEST['fname'] : $fname;
+        $lname = is_null($lname) ? $_REQUEST['lname'] : $lname;
+        $email = is_null($email) ? $_REQUEST['email'] : $email;
+        $userId = is_null($userId) ? $_REQUEST['userId'] : $userId;
+        $source = is_null($source) ? $_REQUEST['source'] : $source;
+        $playerId = is_null($playerId) ? $_REQUEST['playerId'] : $playerId;
+        $mobileNo = is_null($mobileNo) ? $_REQUEST['mobileNo'] : $mobileNo;
+        $handle = is_null($handle) ? $_REQUEST['handle'] : $handle;
+
+        $frm = $source == 2 ? "fb" : ($source == 3 ? "gl" : "");
+
+
+        if ($email == '')
+            return ['error' => "Invalid Email Id!"];
+
+        if ($user = get_user_by("email", $email)) {
+            (isset($playerId) && !empty($playerId)) ? update_field('player_id', $playerId, "user_" . $user->ID) : '';
+            return $this->getUserDetails($user->ID);
+        }
+
+        if (!empty($handle) && username_exists($handle))
+            return ['error' => "Handle Already Taken"];
+
+
+        $args = array(
+            'first_name' => $fname,
+            'last_name' => $lname,
+            'user_email' => $email,
+            'user_login' => empty($handle) ? $frm . $userId : $handle,
+            'role' => 'subscriber',
+            'nickname' => $fname . " " . $lname,
+            'display_name' => $fname . " " . $lname,
+            'rich_editing' => FALSE
+        );
+
+        $user = wp_insert_user($args);
+
+        update_field('source', $source, 'user_' . $user);
+        update_field('mobile_no', $mobileNo, 'user_' . $user);
+        update_field('profile_picture', $userId, 'user_' . $user);
+        (isset($playerId) && !empty($playerId)) ? update_field('player_id', $playerId, "user_" . $user) : '';
+
+
+        return $this->getUserDetails($user);
+    }
+
+    function manualRegistration($fname = null, $lname = null, $email = null, $pass = null, $handle = null, $playerId = null, $mobileNo = null) {
+
+        $fname = is_null($fname) ? $_REQUEST['fname'] : $fname;
+        $lname = is_null($lname) ? $_REQUEST['lname'] : $lname;
+        $email = is_null($email) ? $_REQUEST['email'] : $email;
+        $pass = is_null($pass) ? $_REQUEST['pass'] : $pass;
+        $handle = is_null($handle) ? $_REQUEST['handle'] : $handle;
+        $mobileNo = is_null($mobileNo) ? $_REQUEST['mobileNo'] : $mobileNo;
+        $source = 1;
+        $playerId = is_null($playerId) ? $_REQUEST['playerId'] : $playerId;
+
+        if (email_exists($email))
+            return ['msg' => "Email Id already exist", 'errorType' => 'danger'];
+
+        if (username_exists($handle) && !empty($handle) && isset($handle))
+            return ['msg' => "Handle already taken", 'errorType' => 'danger'];
+
+        if (empty($email) || empty($pass) || empty($fname) || empty($lname))
+            return ['msg' => "Please fill all the compulsory fields!", 'errorType' => 'danger'];
+
+
+        $args = array(
+            'first_name' => $fname,
+            'last_name' => $lname,
+            'user_email' => $email,
+            'user_pass' => $pass,
+            'user_login' => $handle,
+            'role' => 'subscriber',
+            'nickname' => $fname . " " . $lname,
+            'display_name' => $fname . " " . $lname,
+            'rich_editing' => FALSE
+        );
+
+        $user = wp_insert_user($args);
+
+        update_field('source', $source, 'user_' . $user);
+        update_field('mobile_no', $mobileNo, 'user_' . $user);
+        (isset($playerId) && !empty($playerId)) ? update_field('player_id', $playerId, "user_" . $user) : '';
+
+        return $this->getUserDetails($user);
+    }
+
+    function profileUpdate($fname = null, $lname = null, $pass = null, $handle = null, $playerId = null, $mobileNo = null) {
+        global $wpdb;
+
+        $fname = is_null($fname) ? $_REQUEST['fname'] : $fname;
+        $lname = is_null($lname) ? $_REQUEST['lname'] : $lname;
+        $pass = is_null($pass) ? $_REQUEST['pass'] : $pass;
+        $handle = is_null($handle) ? $_REQUEST['handle'] : $handle;
+        $mobileNo = is_null($mobileNo) ? $_REQUEST['mobileNo'] : $mobileNo;
+        $source = 1;
+        $playerId = is_null($playerId) ? $_REQUEST['playerId'] : $playerId;
+
+        $user = get_user_by('ID', $this->userId)->data;
+
+
+
+        if (empty($fname) || empty($lname))
+            return ['msg' => "Please fill all the compulsory fields!", 'errorType' => 'danger'];
+
+        $args = [
+            'ID' => $user->ID,
+            'first_name' => $fname,
+            'last_name' => $lname,
+            'role' => 'subscriber',
+            'nickname' => $fname . " " . $lname,
+            'display_name' => $fname . " " . $lname,
+            'rich_editing' => FALSE
+        ];
+
+        !empty($pass) ? $args['user_pass'] = $pass : '';
+
+        if (!empty($handle) && $handle != $user->user_login && username_exists($handle))
+            return ['msg' => "Handle already taken", 'errorType' => 'danger'];
+
+
+        if (!empty($handle) && $handle != $user->user_login && !username_exists($handle))
+            $wpdb->update($wpdb->users, ['user_login' => $handle], ['ID' => $user->ID]);
+
+
+
+
+        $user = wp_update_user($args);
+        update_field('mobile_no', $mobileNo, 'user_' . $user);
+        (isset($playerId) && !empty($playerId)) ? update_field('player_id', $playerId, "user_" . $user) : '';
+
+        return $this->getUserDetails($user);
+    }
+
     public function follow($id = null) {
         global $wpdb;
 
@@ -87,7 +241,7 @@ trait Users {
             return ['error' => 'Oops ... Looks like something went wrong'];
         }
     }
-    
+
     public function followGossip($id = null) {
         global $wpdb;
 
@@ -112,7 +266,7 @@ trait Users {
             return ['error' => 'Oops ... Looks like something went wrong'];
         }
     }
-    
+
     public function unfollowGossip($id = null) {
         global $wpdb;
 

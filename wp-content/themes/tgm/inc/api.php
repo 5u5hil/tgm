@@ -3,12 +3,14 @@
 require get_template_directory() . '/inc/traits/Users.php';
 require get_template_directory() . '/inc/traits/Trends.php';
 require get_template_directory() . '/inc/traits/Cron.php';
+require get_template_directory() . '/inc/traits/OneSignal.php';
 
 class API {
 
     use Users,
         Trends,
-        Cron;
+        Cron,
+        OneSignal;
 
     protected $userId;
 
@@ -357,18 +359,13 @@ class API {
         $following = $wpdb->num_rows;
 
         $data = get_userdata($id)->data;
-
         $data->first_name = get_user_meta($id, 'first_name', true);
         $data->last_name = get_user_meta($id, 'last_name', true);
-        $data->handle = $data->user_login;
         $data->source = get_user_meta($id, 'source', true);
         $data->img = $this->getUserImg($id);
         $data->follower_count = $followers;
         $data->following_count = $following;
-
         unset($data->user_pass);
-
-
 
         return $data;
     }
