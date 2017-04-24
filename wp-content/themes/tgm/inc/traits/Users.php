@@ -19,7 +19,7 @@ trait Users {
         }
     }
 
-    function socialRegistration($fname = null, $lname = null, $email = null, $userId = null, $source = null, $playerId = null, $mobileNo = null, $handle = null) {
+    public function socialRegistration($fname = null, $lname = null, $email = null, $userId = null, $source = null, $playerId = null, $mobileNo = null, $handle = null) {
 
         $fname = is_null($fname) ? $_REQUEST['fname'] : $fname;
         $lname = is_null($lname) ? $_REQUEST['lname'] : $lname;
@@ -67,7 +67,7 @@ trait Users {
         return $this->getUserDetails($user);
     }
 
-    function manualRegistration($fname = null, $lname = null, $email = null, $pass = null, $handle = null, $playerId = null, $mobileNo = null) {
+    public function manualRegistration($fname = null, $lname = null, $email = null, $pass = null, $handle = null, $playerId = null, $mobileNo = null) {
 
         $fname = is_null($fname) ? $_REQUEST['fname'] : $fname;
         $lname = is_null($lname) ? $_REQUEST['lname'] : $lname;
@@ -109,7 +109,7 @@ trait Users {
         return $this->getUserDetails($user);
     }
 
-    function profileUpdate($fname = null, $lname = null, $pass = null, $handle = null, $playerId = null, $mobileNo = null) {
+    public function profileUpdate($fname = null, $lname = null, $pass = null, $handle = null, $playerId = null, $mobileNo = null) {
         global $wpdb;
 
         $fname = is_null($fname) ? $_REQUEST['fname'] : $fname;
